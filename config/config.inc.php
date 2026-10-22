@@ -10,30 +10,40 @@
 	// An example server.  Create as many of these as you wish,
 	// indexed from zero upwards.
 
-	// Display name for the server on the login screen
-	$conf['servers'][0]['desc'] = 'PostgreSQL';
+	// Servers are configured from environment variables. Server 0 uses the
+	// plain names (POSTGRES_HOST, ...). Optional servers 1-3 use the suffixes
+	// _2, _3 and _4 (POSTGRES_HOST_2, ...) and are added only when
+	// POSTGRES_HOST_<n> is defined.
+	foreach (array('', '_2', '_3', '_4') as $idx => $sfx) {
+		if ($idx > 0 && getenv('POSTGRES_HOST' . $sfx) === false) {
+			continue;
+		}
 
-	// Hostname or IP address for server.  Use '' for UNIX domain socket.
-	// use 'localhost' for TCP/IP connection on this computer
-	$conf['servers'][0]['host'] = getenv('POSTGRES_HOST');
+		// Display name for the server on the login screen
+		$conf['servers'][$idx]['desc'] = getenv('POSTGRES_DESCR' . $sfx) ?: getenv('POSTGRES_HOST' . $sfx);
 
-	// Database port on server (5432 is the PostgreSQL default)
-	$conf['servers'][0]['port'] = intval(getenv('POSTGRES_PORT'));
+		// Hostname or IP address for server.  Use '' for UNIX domain socket.
+		// use 'localhost' for TCP/IP connection on this computer
+		$conf['servers'][$idx]['host'] = getenv('POSTGRES_HOST' . $sfx);
 
-	// Database SSL mode
-	// Possible options: disable, allow, prefer, require
-	// To require SSL on older servers use option: legacy
-	// To ignore the SSL mode, use option: unspecified
-	$conf['servers'][0]['sslmode'] = 'allow';
+		// Database port on server (5432 is the PostgreSQL default)
+		$conf['servers'][$idx]['port'] = intval(getenv('POSTGRES_PORT' . $sfx) ?: '5432');
 
-	// Change the default database only if you cannot connect to template1.
-	// For a PostgreSQL 8.1+ server, you can set this to 'postgres'.
-	$conf['servers'][0]['defaultdb'] = 'template1';
+		// Database SSL mode
+		// Possible options: disable, allow, prefer, require
+		// To require SSL on older servers use option: legacy
+		// To ignore the SSL mode, use option: unspecified
+		$conf['servers'][$idx]['sslmode'] = getenv('POSTGRES_SSL_MODE' . $sfx) ?: 'allow';
 
-	// Specify the path to the database dump utilities for this server.
-	// You can set these to '' if no dumper is available.
-	$conf['servers'][0]['pg_dump_path'] = '/usr/bin/pg_dump';
-	$conf['servers'][0]['pg_dumpall_path'] = '/usr/bin/pg_dumpall';
+		// Change the default database only if you cannot connect to template1.
+		// For a PostgreSQL 8.1+ server, you can set this to 'postgres'.
+		$conf['servers'][$idx]['defaultdb'] = getenv('POSTGRES_DB' . $sfx) ?: 'postgres';
+
+		// Specify the path to the database dump utilities for this server.
+		// You can set these to '' if no dumper is available.
+		$conf['servers'][$idx]['pg_dump_path'] = '/usr/bin/pg_dump';
+		$conf['servers'][$idx]['pg_dumpall_path'] = '/usr/bin/pg_dumpall';
+	}
 
 	// Example for a second server (PostgreSQL for Windows)
 	//$conf['servers'][1]['desc'] = 'Test Server';
@@ -87,7 +97,7 @@
 	// Default language. E.g.: 'english', 'polish', etc.  See lang/ directory
 	// for all possibilities. If you specify 'auto' (the default) it will use
 	// your browser preference.
-	$conf['default_lang'] = 'auto';
+	$conf['default_lang'] = getenv('DEFAULT_LANG') ?: 'auto';
 
 	// If extra session security is true, then PHP's session cookies will have
 	// SameSite cookie flags set to prevent CSRF attacks.  If you're using
@@ -111,13 +121,14 @@
 	// will be denied. Only set this false once you have read the FAQ and
 	// understand how to change PostgreSQL's pg_hba.conf to enable
 	// passworded local connections.
-	$conf['extra_login_security'] = true;
+
+	$conf['extra_login_security'] = false;  // vk: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	// Only show owned databases?
 	// Note: This will simply hide other databases in the list - this does
 	// not in any way prevent your users from seeing other database by
 	// other means. (e.g. Run 'SELECT * FROM pg_database' in the SQL area.)
-	$conf['owned_only'] = false;
+	$conf['owned_only'] = filter_var(getenv('SHOW_OWNED_ONLY'), FILTER_VALIDATE_BOOLEAN);
 
 	// Display comments on objects?  Comments are a good way of documenting
 	// a database, but they do take up space in the interface.
@@ -127,10 +138,10 @@
 	// aggregates, types, operators, operator classes, conversions,
 	// languages and casts in phpPgAdmin. These objects are rarely
 	// administered and can clutter the interface.
-	$conf['show_advanced'] = false;
+	$conf['show_advanced'] = filter_var(getenv('SHOW_ADVANCED_OBJECTS'), FILTER_VALIDATE_BOOLEAN);
 
 	// Display "system" objects?
-	$conf['show_system'] = false;
+	$conf['show_system'] = filter_var(getenv('SHOW_SYSTEM_OBJECTS'), FILTER_VALIDATE_BOOLEAN);
 
 	// Minimum length users can set their password to.
 	$conf['min_password_length'] = 1;
@@ -139,7 +150,7 @@
 	$conf['left_width'] = 200;
 
 	// Which look & feel theme to use
-	$conf['theme'] = 'default';
+	$conf['theme'] = getenv('THEME') ?: 'default';
 
 	// Show OIDs when browsing tables?
 	// Only supported in versions <=11
