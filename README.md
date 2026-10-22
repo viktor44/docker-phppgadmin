@@ -27,7 +27,7 @@ Example:
 docker run -p 8080:80 \
   -e POSTGRES_HOST=db1 \
   -e POSTGRES_HOST_2=db2 -e POSTGRES_PORT_2=5433 -e POSTGRES_DESCR_2="Staging" \
-  <image>
+  viktor44/phppgadmin:latest
 ```
 
 ### Interface
@@ -38,6 +38,35 @@ docker run -p 8080:80 \
  * `SHOW_ADVANCED_OBJECTS` - Show aggregates, types, operators, operator classes, conversions, languages and casts (default `false`)
  * `SHOW_SYSTEM_OBJECTS` - Show system objects (default `false`)
  * `PORT` - exposed HTTP port (Default 80)
+
+## Usage
+
+Example `docker-compose.yaml` with a PostgreSQL server and phpPgAdmin:
+
+```yaml
+services:
+
+  db:
+    image: postgres:18
+    shm_size: 128mb
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+
+  pgadmin:
+    image: viktor44/phppgadmin:latest
+    depends_on:
+      - db
+    ports:
+      - 5000:80
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+```
+
+Run `docker compose up` and open http://localhost:5000. Log in with `postgres` / `example`.
 
 ## Issues
 
